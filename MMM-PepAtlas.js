@@ -98,10 +98,16 @@ Module.register("MMM-PepAtlas", {
   mkHeader(title, color) {
     const el = document.createElement("div");
     el.className = "pep-header";
+  
+    const isOnline =
+      this.data?.safemed?.onlineNow > 0 ||
+      this.data?.pep?.dashboard?.activeUsersNow > 0;
+  
     el.innerHTML = `
       <span>${title}</span>
-      <span class="pep-live ${color}"></span>
+      <span class="pep-live ${isOnline ? "green" : "red"}"></span>
     `;
+  
     return el;
   },
 
@@ -117,15 +123,23 @@ Module.register("MMM-PepAtlas", {
   },
 
   mkSafeMedGrid(d) {
-    const bruto = d?.faturamentoBruto ? `R$ ${Math.round(d.faturamentoBruto).toLocaleString("pt-BR")}` : "—";
-    const liquido = d?.faturamentoLiquido ? `R$ ${Math.round(d.faturamentoLiquido).toLocaleString("pt-BR")}` : "—";
-
+    const formatBRL = (value) => {
+      const num = Number(value);
+      if (!Number.isFinite(num) || num <= 0) return "R$ —";
+  
+      return num.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        maximumFractionDigits: 0
+      });
+    };
+  
     return this.mkGrid([
       { value: d?.totalMedicos ?? "—", label: "Doctors", sub: "active" },
       { value: d?.onlineNow ?? "0", label: "Online", sub: "15 min" },
-      { value: bruto, label: "Gross", sub: "month" },
-      { value: liquido, label: "Net", sub: "month" }
-    ], "compact");
+      { value: formatBRL(d?.faturamentoBruto), label: "Gross", sub: "month" },
+      { value: formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" }
+    ]);
   },
 
   mkGrid(items, extraClass = "") {
