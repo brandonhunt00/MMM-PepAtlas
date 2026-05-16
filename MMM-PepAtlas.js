@@ -52,7 +52,7 @@ Module.register("MMM-PepAtlas", {
 
   getDom: function () {
     var w = document.createElement("div");
-    w.className = "pep-atlas-wrapper";
+    w.className = "pep-atlas-wrapper bodice";
 
     if (this.data.status === "loading") {
       w.innerHTML = '<div class="pep-status loading">connecting...</div>';
@@ -65,12 +65,14 @@ Module.register("MMM-PepAtlas", {
 
     // PEP Atlas block
     if (this.data.pep) {
-      w.appendChild(this.mkHeader("PEP Atlas", "dot-green"));
-      w.appendChild(this.mkPepGrid(this.data.pep.dashboard));
+      var pepBlock = document.createElement("div");
+      pepBlock.className = "pep-block";
+      pepBlock.appendChild(this.mkHeader("PEP Atlas", "dot-green"));
+      pepBlock.appendChild(this.mkPepGrid(this.data.pep.dashboard));
       if (this.config.showActivityFeed && this.data.pep.auditLogs.length) {
-        w.appendChild(this.mkDivider());
-        w.appendChild(this.mkFeed(this.data.pep.auditLogs));
+        pepBlock.appendChild(this.mkFeed(this.data.pep.auditLogs));
       }
+      w.appendChild(pepBlock);
     }
 
     // Separator
@@ -82,8 +84,11 @@ Module.register("MMM-PepAtlas", {
 
     // SafeMed block
     if (this.data.safemed) {
-      w.appendChild(this.mkHeader("SafeMed", "dot-blue"));
-      w.appendChild(this.mkSafeMedGrid(this.data.safemed));
+      var smBlock = document.createElement("div");
+      smBlock.className = "pep-block";
+      smBlock.appendChild(this.mkHeader("SafeMed", "dot-blue"));
+      smBlock.appendChild(this.mkSafeMedGrid(this.data.safemed));
+      w.appendChild(smBlock);
     }
 
     // Timestamp
@@ -101,12 +106,6 @@ Module.register("MMM-PepAtlas", {
     el.innerHTML =
       '<span class="pep-block-title">' + title + "</span>" +
       '<span class="pep-dot ' + dotClass + '">⬤</span>';
-    return el;
-  },
-
-  mkDivider: function () {
-    var el = document.createElement("div");
-    el.className = "pep-divider";
     return el;
   },
 
