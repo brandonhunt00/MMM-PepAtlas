@@ -55,11 +55,11 @@ Module.register("MMM-PepAtlas", {
     w.className = "pep-atlas-wrapper";
 
     if (this.data.status === "loading") {
-      w.innerHTML = '<div class="pep-status loading">conectando...</div>';
+      w.innerHTML = '<div class="pep-status loading">connecting...</div>';
       return w;
     }
     if (this.data.status === "error" && !this.data.pep && !this.data.safemed) {
-      w.innerHTML = '<div class="pep-status error">⬤  API indisponível</div>';
+      w.innerHTML = '<div class="pep-status error">⬤  API unavailable</div>';
       return w;
     }
 
@@ -115,15 +115,15 @@ Module.register("MMM-PepAtlas", {
     var g = document.createElement("div");
     g.className = "pep-grid";
     [
-      { v: d.activeHospitals || d.totalHospitals || "—", l: "Hospitais",  s: "ativos" },
-      { v: (d.occupiedBeds || "—") + "/" + (d.totalBeds || "—"), l: "Leitos", s: "ocupados" },
-      { v: d.activeUsersNow  || "0", l: "Online",    s: "agora",     hi: true },
-      { v: d.usersLoggedInEver || "—", l: "Logins",  s: "hoje" },
-      { v: d.openTickets     || "0", l: "Tickets",   s: "abertos" },
-      { v: d.occupancyRate   ? Math.round(d.occupancyRate) + "%" : "—", l: "Ocupação", s: "taxa" },
+      { v: d.activeHospitals || d.totalHospitals || "—", l: "Hospitals",  s: "active" },
+      { v: (d.occupiedBeds || "—") + "/" + (d.totalBeds || "—"), l: "Beds", s: "occupied" },
+      { v: d.activeUsersNow  || "0", l: "Online",    s: "now",     hi: true },
+      { v: d.usersLoggedInEver || "—", l: "Logins",  s: "today" },
+      { v: d.openTickets     || "0", l: "Tickets",   s: "open" },
+      { v: d.occupancyRate   ? Math.round(d.occupancyRate) + "%" : "—", l: "Occupancy", s: "rate" },
     ].forEach(function (item) {
       var c = document.createElement("div");
-      c.className = "pep-card" + (item.hi ? " hi-green" : "");
+      c.className = "pep-card";
       c.innerHTML =
         '<div class="cv">' + item.v + "</div>" +
         '<div class="cl">' + item.l + "</div>" +
@@ -139,20 +139,20 @@ Module.register("MMM-PepAtlas", {
     g.className = "pep-grid safemed-grid";
 
     var bruto  = d.faturamentoBruto
-      ? "R$ " + Math.round(d.faturamentoBruto).toLocaleString("pt-BR")
+      ? "R$ " + Math.round(d.faturamentoBruto).toLocaleString("en-US")
       : "—";
     var liquido = d.faturamentoLiquido
-      ? "R$ " + Math.round(d.faturamentoLiquido).toLocaleString("pt-BR")
+      ? "R$ " + Math.round(d.faturamentoLiquido).toLocaleString("en-US")
       : "—";
 
     [
-      { v: d.totalMedicos  || "—",  l: "Médicos",    s: "ativos" },
-      { v: d.onlineNow     || "0",  l: "Online agora", s: "últimos 15min", hi: true },
-      { v: bruto,                   l: "Fat. bruto",  s: "este mês" },
-      { v: liquido,                 l: "Fat. líquido", s: "este mês" },
+      { v: d.totalMedicos  || "—",  l: "Doctors",    s: "active" },
+      { v: d.onlineNow     || "0",  l: "Online now", s: "last 15 min", hi: true },
+      { v: bruto,                   l: "Gross rev.",  s: "this month" },
+      { v: liquido,                 l: "Net rev.",    s: "this month" },
     ].forEach(function (item) {
       var c = document.createElement("div");
-      c.className = "pep-card" + (item.hi ? " hi-blue" : "");
+      c.className = "pep-card";
       c.innerHTML =
         '<div class="cv sm">' + item.v + "</div>" +
         '<div class="cl">' + item.l + "</div>" +
@@ -167,14 +167,14 @@ Module.register("MMM-PepAtlas", {
     var wrap = document.createElement("div");
     var title = document.createElement("div");
     title.className = "pep-feed-title";
-    title.textContent = "Atividade recente";
+    title.textContent = "Recent activity";
     wrap.appendChild(title);
     var feed = document.createElement("div");
     feed.className = "pep-feed";
     logs.slice(0, this.config.maxActivityItems).forEach(function (log) {
       var item = document.createElement("div");
       item.className = "pep-feed-item";
-      var user   = (log.user && log.user.name) ? log.user.name : "Sistema";
+      var user   = (log.user && log.user.name) ? log.user.name : "System";
       var action = self.fmtAction(log.action);
       var entity = self.fmtEntity(log.entity);
       var time   = self.fmtRel(log.createdAt);
@@ -191,27 +191,27 @@ Module.register("MMM-PepAtlas", {
 
   fmtTime: function (d) {
     if (!d) return "";
-    return "atualizado às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return "updated at " + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   },
 
   fmtRel: function (iso) {
     if (!iso) return "";
     var s = Math.floor((Date.now() - new Date(iso)) / 1000);
-    if (s < 60)   return s + "s";
-    if (s < 3600) return Math.floor(s / 60) + "min";
+    if (s < 60)    return s + "s";
+    if (s < 3600)  return Math.floor(s / 60) + "min";
     if (s < 86400) return Math.floor(s / 3600) + "h";
     return Math.floor(s / 86400) + "d";
   },
 
   fmtAction: function (a) {
-    return ({ CREATE: "criou", UPDATE: "atualizou", DELETE: "removeu",
-              LOGIN: "fez login", LOGOUT: "saiu", DISCHARGE: "deu alta em" })[a] || a;
+    return ({ CREATE: "created", UPDATE: "updated", DELETE: "removed",
+              LOGIN: "logged in", LOGOUT: "logged out", DISCHARGE: "discharged" })[a] || a;
   },
 
   fmtEntity: function (e) {
-    return ({ Patient: "paciente", Admission: "internação",
-              ClinicalNote: "evolução", Prescription: "prescrição",
-              Exam: "exame", Discharge: "alta", User: "usuário" })[e] || e;
+    return ({ Patient: "patient", Admission: "admission",
+              ClinicalNote: "note", Prescription: "prescription",
+              Exam: "exam", Discharge: "discharge", User: "user" })[e] || e;
   },
 
   actionClass: function (a) {
