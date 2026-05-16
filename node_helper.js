@@ -174,77 +174,35 @@ module.exports = NodeHelper.create({
     var cfg = this.config.safemed;
     if (!cfg || !cfg.enabled) return null;
 
-    var BASE = cfg.supabaseUrl + "/rest/v1";
-    var KEY  = cfg.supabaseKey;
-    var H    = {
-      "apikey": KEY,
-      "Authorization": "Bearer " + KEY,
-      "Content-Type": "application/json",
-    };
-
     try {
-      var now = new Date();
-      var mesAtual   = now.getFullYear() + "-" +
-                       String(now.getMonth() + 1).padStart(2, "0") + "-01";
-      var mesSeguinte = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-                        .toISOString().slice(0, 10);
-      var quinzeMinAtras = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-
-      // 1. Total médicos ativos (role = medico, status = true)
-      var totalRes = await fetch(
-        BASE + "/profiles?role=eq.medico&status=eq.true&select=id",
-        { headers: { ...H, "Prefer": "count=exact", "Range": "0-0" } }
+      var res = await fetch(
+        "https://kllwasybursqjxgscbdb.supabase.co/functions/v1/mirror-stats",
+        {
+          headers: {
+            "X-Mirror-Token": "pep-atlas-mirror-2026",
+            "Content-Type": "application/json",
+          },
+        }
       );
-      var crTotal = totalRes.headers.get("content-range") || "0/0";
-      var totalMedicos = parseInt(crTotal.split("/")[1] || "0");
 
-      // 2. Online agora — user_ids únicos com evento nos últimos 15 minutos
-      // Busca até 500 registros recentes e conta user_ids únicos
-      var onlineRes = await fetch(
-        BASE + "/security_audit_log?created_at=gte." + quinzeMinAtras +
-        "&select=user_id&limit=500",
-        { headers: H }
-      );
-      var onlineRows = onlineRes.ok ? await onlineRes.json() : [];
-      var uniqueUsers = new Set();
-      if (Array.isArray(onlineRows)) {
-        onlineRows.forEach(function (r) { if (r.user_id) uniqueUsers.add(r.user_id); });
+      if (!res.ok) {
+        console.error("[MMM-SafeMed] HTTP error:", res.status);
+        return null;
       }
-      var onlineNow = uniqueUsers.size;
 
-      // 3. Faturamento bruto do mês atual
-      var fatBrutoRes = await fetch(
-        BASE + "/faturamento?competencia=gte." + mesAtual +
-        "&competencia=lt." + mesSeguinte +
-        "&select=valor_bruto",
-        { headers: H }
-      );
-      var fatBrutoRows = fatBrutoRes.ok ? await fatBrutoRes.json() : [];
-      var faturamentoBruto = Array.isArray(fatBrutoRows)
-        ? fatBrutoRows.reduce((s, r) => s + (parseFloat(r.valor_bruto) || 0), 0)
-        : 0;
+      var data = await res.json();
+      console.log("[MMM-SafeMed] Fetched OK:", JSON.stringify(data));
 
-      // 4. Faturamento líquido do mês atual
-      var fatLiqRes = await fetch(
-        BASE + "/faturamento?competencia=gte." + mesAtual +
-        "&competencia=lt." + mesSeguinte +
-        "&select=valor_liquido",
-        { headers: H }
-      );
-      var fatLiqRows = fatLiqRes.ok ? await fatLiqRes.json() : [];
-      var faturamentoLiquido = Array.isArray(fatLiqRows)
-        ? fatLiqRows.reduce((s, r) => s + (parseFloat(r.valor_liquido) || 0), 0)
-        : 0;
-
-      console.log("[MMM-SafeMed] Médicos:", totalMedicos,
-        "| Online:", onlineNow,
-        "| Bruto: R$", faturamentoBruto.toFixed(2),
-        "| Líquido: R$", faturamentoLiquido.toFixed(2));
-
-      return { totalMedicos, onlineNow, faturamentoBruto, faturamentoLiquido };
+      return {
+        totalMedicos: data.totalDoctors || 0,
+        onlineNow: data.onlineNow || 0,
+        faturamentoBruto: data.grossRevenueThisMonth || 0,
+        faturamentoLiquido: data.netRevenueThisMonth || 0,
+        totalActivities: data.totalActivitiesThisMonth || 0,
+      };
 
     } catch (e) {
-      console.error("[MMM-SafeMed] Error:", e.message);
+      console.error("[MMM-SafeMed] Fetch error:", e.message);
       return null;
     }
   },

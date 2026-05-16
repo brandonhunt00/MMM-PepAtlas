@@ -1,6 +1,6 @@
 Module.register("MMM-PepAtlas", {
   defaults: {
-    apiUrl: "",
+    apiUrl: "https://dejected-squeamish-yin.ngrok-free.dev/api/v1",
     email: "",
     password: "",
     refreshInterval: 30 * 1000,
@@ -128,7 +128,8 @@ Module.register("MMM-PepAtlas", {
       { value: d?.totalMedicos ?? "—", label: "Doctors", sub: "active" },
       { value: d?.onlineNow ?? "0", label: "Online", sub: "15 min" },
       { value: this.formatBRL(d?.faturamentoBruto), label: "Gross", sub: "month" },
-      { value: this.formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" }
+      { value: this.formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" },
+      { value: d?.totalActivities ?? "0", label: "Activities", sub: "this month" }
     ]);
   },
 
