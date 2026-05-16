@@ -197,8 +197,10 @@ module.exports = NodeHelper.create({
         totalMedicos: data.totalDoctors || 0,
         onlineNow: data.onlineNow || 0,
         faturamentoBruto: data.grossRevenueThisMonth || 0,
+        faturamentoBrutoAllTime: data.grossRevenueAllTime || 0,
         faturamentoLiquido: data.netRevenueThisMonth || 0,
         totalActivities: data.totalActivitiesThisMonth || 0,
+        totalActivitiesAllTime: data.totalActivitiesAllTime || 0,
       };
 
     } catch (e) {

@@ -126,10 +126,11 @@ Module.register("MMM-PepAtlas", {
   mkSafeMedGrid(d) {
     return this.mkGrid([
       { value: d?.totalMedicos ?? "—", label: "Doctors", sub: "active" },
-      { value: d?.onlineNow ?? "0", label: "Online", sub: "15 min" },
-      { value: this.formatBRL(d?.faturamentoBruto), label: "Gross", sub: "month" },
-      { value: this.formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" },
-      { value: d?.totalActivities ?? "0", label: "Activities", sub: "this month" }
+      { value: d?.onlineNow ?? "0", label: "Online now", sub: "last 15 min" },
+      { value: this.fmtBRL(d?.faturamentoBruto), label: "Gross month", sub: "this month" },
+      { value: this.fmtBRL(d?.faturamentoBrutoAllTime), label: "Gross all time", sub: "total" },
+      { value: d?.totalActivities ?? "0", label: "Activities", sub: "this month" },
+      { value: d?.totalActivitiesAllTime ?? "0", label: "Activities", sub: "all time" }
     ]);
   },
 
@@ -197,15 +198,11 @@ Module.register("MMM-PepAtlas", {
     return `${Math.round(num)}%`;
   },
 
-  formatBRL(value) {
-    const num = Number(value);
-    if (!Number.isFinite(num) || num <= 0) return "R$ —";
-
-    return num.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0
-    });
+  fmtBRL(v) {
+    if (!v) return "—";
+    if (v >= 1000000) return "R$" + (v / 1000000).toFixed(1) + "M";
+    if (v >= 1000) return "R$" + Math.round(v / 1000) + "k";
+    return "R$" + Math.round(v);
   },
 
   fmtTime(d) {
