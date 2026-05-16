@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.45);
   color: #fff;
   font-size: 12px;
@@ -51,28 +51,31 @@
 .pep-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  column-gap: 28px;
-  row-gap: 16px;
+  column-gap: 44px;
+  row-gap: 18px;
+  padding-top: 0;
+  transform: translateY(-2px);
 }
 
 .pep-card {
-  text-align: center;
+  text-align: left;
+  min-width: 0;
 }
 
 .pep-value {
   color: #fff;
-  font-size: 22px;
+  font-size: 27px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 0.95;
   white-space: nowrap;
 }
 
 .pep-label {
-  margin-top: 4px;
+  margin-top: 3px;
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1;
 }
 
 .pep-sub {
@@ -86,7 +89,7 @@
 }
 
 .pep-footer {
-  margin-top: 10px;
+  margin-top: 8px;
   color: #aaa;
   font-size: 10px;
   text-align: right;

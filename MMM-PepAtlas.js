@@ -33,8 +33,8 @@ Module.register("MMM-PepAtlas", {
 
   socketNotificationReceived(notification, payload) {
     if (notification === "DATA_UPDATE") {
-      this.data.pep = payload.pep;
-      this.data.safemed = payload.safemed;
+      this.data.pep = payload.pep || null;
+      this.data.safemed = payload.safemed || null;
       this.data.lastUpdated = new Date();
       this.data.status = "ok";
       this.updateDom(300);
@@ -42,6 +42,7 @@ Module.register("MMM-PepAtlas", {
 
     if (notification === "DATA_ERROR") {
       this.data.status = "error";
+      this.data.lastUpdated = new Date();
       this.updateDom(300);
     }
   },
@@ -56,95 +57,84 @@ Module.register("MMM-PepAtlas", {
     const wrapper = document.createElement("div");
     wrapper.className = "pep-atlas-wrapper";
 
-    if (this.data.status === "loading") {
-      wrapper.innerHTML = `<div class="pep-status loading">Connecting dashboards…</div>`;
-      return wrapper;
+    const pepBlock = document.createElement("section");
+    pepBlock.className = "pep-panel";
+    pepBlock.appendChild(this.mkHeader("PEP Atlas", this.isPepConnected()));
+    pepBlock.appendChild(this.mkPepGrid(this.data.pep?.dashboard));
+    wrapper.appendChild(pepBlock);
+
+    if (this.config.showActivityFeed && this.data.pep?.auditLogs?.length) {
+      pepBlock.appendChild(this.mkFeed(this.data.pep.auditLogs));
     }
 
-    if (this.data.status === "error" && !this.data.pep && !this.data.safemed) {
-      wrapper.innerHTML = `<div class="pep-status error">Dashboard unavailable</div>`;
-      return wrapper;
-    }
-
-    if (this.data.pep) {
-      const pepBlock = document.createElement("section");
-      pepBlock.className = "pep-panel";
-      pepBlock.appendChild(this.mkHeader("PEP Atlas", "green"));
-      pepBlock.appendChild(this.mkPepGrid(this.data.pep.dashboard));
-
-      if (this.config.showActivityFeed && this.data.pep.auditLogs?.length) {
-        pepBlock.appendChild(this.mkFeed(this.data.pep.auditLogs));
-      }
-
-      wrapper.appendChild(pepBlock);
-    }
-
-    if (this.data.safemed) {
+    if (this.config.safemed?.enabled) {
       const safeMedBlock = document.createElement("section");
       safeMedBlock.className = "pep-panel";
-      safeMedBlock.appendChild(this.mkHeader("SafeMed", "blue"));
+      safeMedBlock.appendChild(this.mkHeader("SafeMed", this.isSafeMedConnected()));
       safeMedBlock.appendChild(this.mkSafeMedGrid(this.data.safemed));
       wrapper.appendChild(safeMedBlock);
     }
 
     const footer = document.createElement("div");
     footer.className = "pep-footer";
-    footer.textContent = this.fmtTime(this.data.lastUpdated);
+
+    if (this.data.status === "loading") {
+      footer.textContent = "connecting dashboards…";
+    } else if (this.data.status === "error") {
+      footer.textContent = "dashboard fetch error";
+      footer.classList.add("error");
+    } else {
+      footer.textContent = this.fmtTime(this.data.lastUpdated);
+    }
+
     wrapper.appendChild(footer);
 
     return wrapper;
   },
 
-  mkHeader(title, color) {
+  isPepConnected() {
+    return Boolean(this.data.pep?.dashboard);
+  },
+
+  isSafeMedConnected() {
+    return Boolean(this.data.safemed);
+  },
+
+  mkHeader(title, isConnected) {
     const el = document.createElement("div");
     el.className = "pep-header";
-  
-    const isOnline =
-      this.data?.safemed?.onlineNow > 0 ||
-      this.data?.pep?.dashboard?.activeUsersNow > 0;
-  
+
     el.innerHTML = `
       <span>${title}</span>
-      <span class="pep-live ${isOnline ? "green" : "red"}"></span>
+      <span class="pep-live ${isConnected ? "green" : "red"}"></span>
     `;
-  
+
     return el;
   },
 
   mkPepGrid(d) {
     return this.mkGrid([
       { value: d?.activeHospitals ?? d?.totalHospitals ?? "—", label: "Hospitals", sub: "active" },
-      { value: `${d?.occupiedBeds ?? "—"}/${d?.totalBeds ?? "—"}`, label: "Beds", sub: "occupied" },
+      { value: this.fmtBeds(d), label: "Beds", sub: "occupied" },
       { value: d?.activeUsersNow ?? "0", label: "Online", sub: "now" },
       { value: d?.usersLoggedInEver ?? "—", label: "Logins", sub: "today" },
       { value: d?.openTickets ?? "0", label: "Tickets", sub: "open" },
-      { value: d?.occupancyRate ? `${Math.round(d.occupancyRate)}%` : "—", label: "Occupancy", sub: "rate" }
+      { value: this.fmtPercent(d?.occupancyRate), label: "Occupancy", sub: "rate" }
     ]);
   },
 
   mkSafeMedGrid(d) {
-    const formatBRL = (value) => {
-      const num = Number(value);
-      if (!Number.isFinite(num) || num <= 0) return "R$ —";
-  
-      return num.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        maximumFractionDigits: 0
-      });
-    };
-  
     return this.mkGrid([
       { value: d?.totalMedicos ?? "—", label: "Doctors", sub: "active" },
       { value: d?.onlineNow ?? "0", label: "Online", sub: "15 min" },
-      { value: formatBRL(d?.faturamentoBruto), label: "Gross", sub: "month" },
-      { value: formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" }
+      { value: this.formatBRL(d?.faturamentoBruto), label: "Gross", sub: "month" },
+      { value: this.formatBRL(d?.faturamentoLiquido), label: "Net", sub: "month" }
     ]);
   },
 
-  mkGrid(items, extraClass = "") {
+  mkGrid(items) {
     const grid = document.createElement("div");
-    grid.className = `pep-grid ${extraClass}`;
+    grid.className = "pep-grid";
 
     items.forEach((item) => {
       const card = document.createElement("div");
@@ -192,9 +182,37 @@ Module.register("MMM-PepAtlas", {
     return wrap;
   },
 
+  fmtBeds(d) {
+    const occupied = d?.occupiedBeds;
+    const total = d?.totalBeds;
+
+    if (occupied == null && total == null) return "—";
+    return `${occupied ?? "—"}/${total ?? "—"}`;
+  },
+
+  fmtPercent(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return "—";
+    return `${Math.round(num)}%`;
+  },
+
+  formatBRL(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return "R$ —";
+
+    return num.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0
+    });
+  },
+
   fmtTime(d) {
     if (!d) return "";
-    return `updated ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+    return `updated ${d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })}`;
   },
 
   fmtRel(iso) {
