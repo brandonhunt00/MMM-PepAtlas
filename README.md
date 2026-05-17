@@ -24,8 +24,8 @@ npm install node-fetch
   config: {
     // PEP Atlas
     apiUrl: "https://api.pepatlas.com.br/api/v1",
-    email: "brandondohunt@hotmail.com",
-    password: "REDACTED_PASSWORD",
+    email: "your-admin@hospital.com",
+    password: "your-password",
     refreshInterval: 30 * 1000,
     showActivityFeed: true,
     maxActivityItems: 5,
