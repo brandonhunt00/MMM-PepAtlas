@@ -1,16 +1,15 @@
 Module.register("MMM-PepAtlas", {
   defaults: {
     apiUrl: "https://dejected-squeamish-yin.ngrok-free.dev/api/v1",
-    email: "",
-    password: "",
+    mirrorKey: "",
     refreshInterval: 30 * 1000,
     showActivityFeed: true,
-    maxActivityItems: 4,
+    maxActivityItems: 5,
     safemed: {
-      enabled: false,
-      supabaseUrl: "",
-      supabaseKey: ""
-    }
+      enabled: true,
+      supabaseUrl: "https://kllwasybursqjxgscbdb.supabase.co",
+      supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsbHdhc3lidXJzcWp4Z3NjYmRiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzQyNDY5NywiZXhwIjoyMDczMDAwNjk3fQ.ADKhdWegZs4utfnTelFh4ajM7d0634qRqqC_CTKgi-0",
+    },
   },
 
   data: {

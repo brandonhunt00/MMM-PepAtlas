@@ -1,10 +1,11 @@
 # MMM-PepAtlas
 
 MagicMirror² module — real-time dashboard for:
-- **PEP Atlas** (hospital EMR) via REST API + auto token refresh
-- **SafeMed** (doctor platform) via Supabase PostgREST
+- **PEP Atlas** (hospital EMR) via read-only mirror API key
+- **SafeMed** (doctor platform) via Supabase Edge Function
 
-Refreshes every 30s. Runs 24/7 without manual intervention.
+Refreshes every 30s. No authentication required — uses a static API key.
+Boots instantly with no login flow, no 2FA, no token cache.
 
 ## Installation
 
@@ -22,15 +23,12 @@ npm install node-fetch
   module: "MMM-PepAtlas",
   position: "top_right",
   config: {
-    // PEP Atlas
     apiUrl: "https://api.pepatlas.com.br/api/v1",
-    email: "your-admin@hospital.com",
-    password: "your-password",
+    mirrorKey: "YOUR_MIRROR_API_KEY",   // from MIRROR_API_KEY in backend .env
     refreshInterval: 30 * 1000,
     showActivityFeed: true,
     maxActivityItems: 5,
 
-    // SafeMed
     safemed: {
       enabled: true,
       supabaseUrl: "https://kllwasybursqjxgscbdb.supabase.co",
@@ -45,31 +43,46 @@ npm install node-fetch
 ### PEP Atlas (6 cards + activity feed)
 | Card | Source |
 |---|---|
-| Hospitais ativos | /admin/dashboard → activeHospitals |
+| Hospitais ativos | activeHospitals |
 | Leitos ocupados/total | occupiedBeds / totalBeds |
-| Usuários online agora | activeUsersNow (sessions last 15min) |
-| Logins hoje | usersLoggedInEver |
+| Usuários online agora | activeUsersNow (sessions last 15 min) |
 | Tickets abertos | openTickets |
 | Taxa de ocupação | occupancyRate % |
 
-Activity feed: last 5 audit log events with color coding.
+Activity feed: last 5 audit log events with color coding by action type.
+No patient names, IDs or clinical content — LGPD compliant for semi-public display.
 
-### SafeMed (4 cards)
+### SafeMed (6 cards)
 | Card | Source |
 |---|---|
-| Médicos ativos | profiles WHERE role=medico AND status=true |
-| Online agora | security_audit_log unique users last 15min |
-| Faturamento bruto | faturamento.valor_bruto current month |
-| Faturamento líquido | faturamento.valor_liquido current month |
+| Médicos ativos | totalDoctors |
+| Online agora | onlineNow |
+| Faturamento bruto (mês) | grossRevenueThisMonth |
+| Faturamento bruto (total) | grossRevenueAllTime |
+| Atividades (mês) | totalActivitiesThisMonth |
+| Atividades (total) | totalActivitiesAllTime |
 
-## Token refresh (PEP Atlas)
-- Tokens cached in `.token-cache.json` (gitignored)
-- Auto-refresh 30s before expiry using refreshToken
-- Falls back to full login if refresh fails
-- 401 responses trigger immediate re-auth
+## Auth model
+
+The mirror endpoint (`GET /api/v1/mirror/dashboard`) is a `@Public()` route
+protected only by the `X-Mirror-Key` header. No JWT, no session, no 2FA.
+
+Generate a key:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Add to backend `.env`:
+```
+MIRROR_API_KEY=<generated-value>
+```
+
+Add to MagicMirror `config.js`:
+```
+mirrorKey: "<generated-value>"
+```
 
 ## .gitignore
 ```
-.token-cache.json
 node_modules/
 ```
