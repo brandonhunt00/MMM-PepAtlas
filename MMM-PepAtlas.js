@@ -1,6 +1,6 @@
 Module.register("MMM-PepAtlas", {
   defaults: {
-    apiUrl: "https://dejected-squeamish-yin.ngrok-free.dev/api/v1",
+    apiUrl: "https://api.pepatlas.com.br/api/v1",
     mirrorKey: "",
     refreshInterval: 30 * 1000,
     showActivityFeed: true,

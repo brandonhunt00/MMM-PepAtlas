@@ -31,7 +31,6 @@ module.exports = NodeHelper.create({
       var res = await fetch(baseUrl + "/api/v1/mirror/dashboard", {
         headers: {
           "X-Mirror-Key": this.config.mirrorKey,
-          "ngrok-skip-browser-warning": "true",
         },
       });
       if (!res.ok) {
