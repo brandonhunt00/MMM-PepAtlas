@@ -72,9 +72,9 @@ Generate a key:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Add to backend `.env`:
-```
-MIRROR_API_KEY=<generated-value>
+Set in Fly.io:
+```bash
+flyctl secrets set MIRROR_API_KEY=<generated-value> --app pep-atlas-api
 ```
 
 Add to MagicMirror `config.js`:
